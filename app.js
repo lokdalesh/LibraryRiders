@@ -1,5 +1,6 @@
 // App State & Mock Data
 const state = {
+    notifications: [],
     currentUser: null, // { email, name, role }
     books: [
         { id: 'B-1001', title: 'The Pragmatic Programmer', author: 'Andy Hunt', category: 'Technology', stock: 3, total: 5, status: 'Available' },
@@ -57,6 +58,16 @@ const UsersDB = {
             return { success: false, message: 'Incorrect password. Please try again.' };
         }
         return { success: true, user: user };
+    },
+    updateUser: function(email, details) {
+        const users = this.getUsers();
+        const index = users.findIndex(u => u.email === email);
+        if (index !== -1) {
+            users[index] = { ...users[index], ...details };
+            localStorage.setItem('nexus_users', JSON.stringify(users));
+            return { success: true, user: users[index] };
+        }
+        return { success: false, message: 'User not found' };
     }
 };
 
@@ -66,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initLogin();
     initNavigation();
     initDateInput();
+    initNotifications();
+    initStudentDetailsForm();
 });
 
 // Login Logic
@@ -160,8 +173,112 @@ function initLogin() {
             // Animate transition to app
             document.getElementById('login-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';
+            
+            // Check if student details are missing
+            if (role === 'student') {
+                if (!result.user.regNum || !result.user.degree || !result.user.branch || !result.user.batch) {
+                    document.getElementById('student-details-modal').style.display = 'flex';
+                }
+            }
         });
     }
+}
+
+function initStudentDetailsForm() {
+    const form = document.getElementById('student-details-form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const details = {
+                regNum: document.getElementById('student-reg-num').value,
+                degree: document.getElementById('student-degree').value,
+                branch: document.getElementById('student-branch').value,
+                batch: document.getElementById('student-batch').value
+            };
+            
+            const result = UsersDB.updateUser(state.currentUser.email, details);
+            if (result.success) {
+                state.currentUser = result.user;
+                document.getElementById('student-details-modal').style.display = 'none';
+                addNotification(`Welcome! Student profile completed for ${details.regNum}`);
+            }
+        });
+    }
+}
+
+function initNotifications() {
+    const btn = document.getElementById('notification-btn');
+    const dropdown = document.getElementById('notification-dropdown');
+    
+    if (btn && dropdown) {
+        btn.addEventListener('click', () => {
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                // Clear badge counter when opened
+                const badge = document.getElementById('notification-badge');
+                if (badge) {
+                    badge.innerText = '0';
+                    badge.style.display = 'none';
+                }
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+}
+
+window.addNotification = function(message) {
+    state.notifications.unshift({
+        id: Date.now(),
+        message: message,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    
+    // Update Badge
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        let currentCount = parseInt(badge.innerText || '0');
+        badge.innerText = currentCount + 1;
+        badge.style.display = 'flex';
+    }
+    
+    renderNotifications();
+};
+
+function renderNotifications() {
+    const list = document.getElementById('notification-list');
+    const msg = document.getElementById('no-notifications-msg');
+    
+    if (!list) return;
+    
+    if (state.notifications.length === 0) {
+        if (msg) msg.style.display = 'block';
+        return;
+    }
+    
+    if (msg) msg.style.display = 'none';
+    
+    // Clear list but keep the no-notifications message
+    list.innerHTML = '';
+    if (msg) list.appendChild(msg);
+    
+    state.notifications.forEach(notif => {
+        const item = document.createElement('div');
+        item.style.padding = '10px 0';
+        item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        item.innerHTML = `
+            <p class="text-sm" style="margin-bottom: 4px;">${notif.message}</p>
+            <span class="text-xs text-muted"><i class='bx bx-time-five'></i> ${notif.time}</span>
+        `;
+        list.insertBefore(item, msg);
+    });
 }
 
 function applyRolePermissions() {
@@ -268,7 +385,81 @@ function renderBooks() {
 
 // Member Function: Reserve Book
 window.reserveBook = function(id, title) {
-    alert(`Success! You have reserved "${title}". Please collect it from the checkout desk within 48 hours using your Campus ID.`);
+    const bookIndex = state.books.findIndex(b => b.id === id);
+    
+    // Check if user already has this book reserved or active
+    const hasAlreadyReserved = state.myHistory.some(item => item.id === id && (item.status === 'Reserved' || item.status === 'Active Loan'));
+    
+    if (hasAlreadyReserved) {
+        alert(`You already have a reservation or active loan for "${title}". You cannot reserve multiple copies of the same book.`);
+        return;
+    }
+
+    if (bookIndex !== -1 && state.books[bookIndex].stock > 0) {
+        // Decrease Stock
+        state.books[bookIndex].stock -= 1;
+        if (state.books[bookIndex].stock === 0) {
+            state.books[bookIndex].status = 'Out of Stock';
+        }
+        
+        // Add to My History
+        const borrowDate = new Date();
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 2); // 48 hours to collect
+        const reservationId = 'RES-' + Date.now();
+        
+        state.myHistory.unshift({
+            _id: reservationId,
+            id: id,
+            title: title,
+            author: state.books[bookIndex].author,
+            borrowDate: borrowDate.toISOString().split('T')[0],
+            dueDate: dueDate.toISOString().split('T')[0],
+            status: 'Reserved'
+        });
+        
+        // Trigger Notification
+        addNotification(`Successfully reserved "${title}". Please collect within 48 hours.`);
+        
+        // Update UI
+        renderBooks();
+        renderMyBooks();
+        
+        alert(`Success! You have reserved "${title}". Please collect it from the checkout desk within 48 hours using your Campus ID.`);
+    } else {
+        alert("Sorry, this book is currently out of stock.");
+    }
+}
+
+// Member Function: Unreserve Book
+window.unreserveBook = function(reservationId, bookId, title) {
+    // Confirm unreservation
+    if (!confirm(`Are you sure you want to cancel your reservation for "${title}"?`)) {
+        return;
+    }
+
+    // Find and remove from myHistory
+    const historyIndex = state.myHistory.findIndex(item => item._id === reservationId);
+    if (historyIndex !== -1) {
+        state.myHistory.splice(historyIndex, 1);
+        
+        // Find in catalog and increment stock
+        const bookIndex = state.books.findIndex(b => b.id === bookId);
+        if (bookIndex !== -1) {
+            state.books[bookIndex].stock += 1;
+            // If it was out of stock, it's now available
+            if (state.books[bookIndex].stock === 1) {
+                state.books[bookIndex].status = 'Available';
+            }
+        }
+        
+        // Trigger Notification
+        addNotification(`Reservation cancelled for "${title}".`);
+        
+        // Update UI
+        renderBooks();
+        renderMyBooks();
+    }
 }
 
 // Render Specific Member's History (Student/Faculty)
@@ -279,7 +470,21 @@ function renderMyBooks() {
     tbody.innerHTML = '';
     state.myHistory.forEach(item => {
         const isReturned = item.status === 'Returned';
-        const badgeClass = isReturned ? 'bg-gray' : 'bg-blue';
+        const isReserved = item.status === 'Reserved';
+        const badgeClass = isReturned ? 'bg-gray' : (isReserved ? 'bg-warning' : 'bg-blue');
+        
+        // Warning badge for reserved status needs a custom inline style or CSS addition.
+        // Re-using bg-blue if warning isn't defined explicitly, or a custom one if available.
+        const actualBadgeClass = isReserved ? 'bg-blue' : badgeClass;
+        
+        let actionButtons = '';
+        if (isReserved) {
+            actionButtons = `
+                <button class="btn btn-outline text-sm text-red" onclick="unreserveBook('${item._id}', '${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+                    <i class='bx bx-x'></i> Cancel
+                </button>
+            `;
+        }
         
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -287,7 +492,8 @@ function renderMyBooks() {
             <td><strong>${item.title}</strong><br><span class="text-xs text-muted">${item.author}</span></td>
             <td>${item.borrowDate}</td>
             <td>${item.dueDate}</td>
-            <td><span class="status-badge ${badgeClass}">${item.status}</span></td>
+            <td><span class="status-badge ${actualBadgeClass}">${item.status}</span></td>
+            <td>${actionButtons}</td>
         `;
         tbody.appendChild(tr);
     });
