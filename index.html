@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus - Premium Library Platform</title>
+    <title>LibraryRiders - Premium Library Platform</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,6 +62,19 @@
                 <button type="submit" class="btn btn-primary full-width shadow-glow" id="auth-submit-btn">Login to
                     Portal <i class='bx bx-right-arrow-alt'></i></button>
 
+                <!-- Social Login Divider -->
+                <div style="display: flex; align-items: center; text-align: center; margin: 1.5rem 0;">
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-glass);">
+                    <span style="padding: 0 10px; color: var(--text-muted); font-size: 0.85rem;">OR</span>
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-glass);">
+                </div>
+
+                <!-- Continue with Mail/Google Mock -->
+                <button type="button" class="btn btn-outline full-width" onclick="socialLoginMock()" style="justify-content: center;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 18px; height: 18px; margin-right: 8px;">
+                    Continue with Google
+                </button>
+
                 <div class="text-center mt-2">
                     <span class="text-muted text-sm">
                         <span id="auth-toggle-text">Don't have an account?</span>
@@ -80,7 +93,7 @@
         <aside class="sidebar glass-panel">
             <div class="logo">
                 <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
-                <span>Nexus LMS</span>
+                <span>LibraryRiders</span>
             </div>
             <div class="nav-section">MAIN MENU</div>
             <ul class="nav-menu">
@@ -131,17 +144,21 @@
                     <div class="notification-btn" id="notification-btn" style="position: relative;">
                         <i class='bx bx-bell'></i>
                         <span class="badge pulse-anim" id="notification-badge" style="display: none;">0</span>
-                        
+
                         <!-- Notifications Dropdown -->
-                        <div id="notification-dropdown" class="glass-panel" style="display: none; position: absolute; top: 120%; right: -10px; width: 300px; padding: 1rem; z-index: 100;">
-                            <h4 style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-glass);">Notifications</h4>
+                        <div id="notification-dropdown" class="glass-panel"
+                            style="display: none; position: absolute; top: 120%; right: -10px; width: 300px; padding: 1rem; z-index: 100;">
+                            <h4
+                                style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-glass);">
+                                Notifications</h4>
                             <div id="notification-list" style="max-height: 250px; overflow-y: auto;">
                                 <!-- Notifications will be injected here -->
-                                <p class="text-sm text-muted text-center py-2" id="no-notifications-msg">No new notifications</p>
+                                <p class="text-sm text-muted text-center py-2" id="no-notifications-msg">No new
+                                    notifications</p>
                             </div>
                         </div>
                     </div>
-                    <div class="avatar-group">
+                    <div class="avatar-group" id="profile-trigger" style="cursor: pointer;">
                         <img id="top-user-avatar"
                             src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&rounded=true&bold=true"
                             alt="User" class="avatar">
@@ -149,6 +166,25 @@
                             <span class="user-name" id="top-user-name">User Name</span>
                             <span class="user-role" id="top-user-role">Role</span>
                         </div>
+                    </div>
+                    
+                    <!-- Profile Dropdown/Details -->
+                    <div id="profile-dropdown" class="glass-panel" style="display: none; position: absolute; top: 70px; right: 2rem; width: 280px; padding: 1.5rem; z-index: 100;">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <img id="dropdown-avatar" src="" alt="Avatar" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--primary); margin-bottom: 0.5rem;">
+                            <h3 id="dropdown-name" style="font-size: 1.1rem; color: #fff;">Name</h3>
+                            <p id="dropdown-role" class="text-sm text-muted">Role</p>
+                        </div>
+                        <div style="border-top: 1px solid var(--border-glass); padding-top: 1rem;">
+                            <p class="text-sm"><i class='bx bx-envelope text-muted'></i> <span id="dropdown-email">email@nexus.edu</span></p>
+                            <div id="dropdown-student-details" style="display: none; margin-top: 0.75rem;">
+                                <p class="text-sm"><i class='bx bx-id-card text-muted'></i> <span id="dropdown-reg"></span></p>
+                                <p class="text-sm mt-2"><i class='bx bx-book-bookmark text-muted'></i> <span id="dropdown-degree"></span> (<span id="dropdown-branch"></span>)</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline full-width mt-2 text-sm" onclick="location.reload()">
+                            <i class='bx bx-log-out'></i> Sign Out
+                        </button>
                     </div>
                 </div>
             </header>
@@ -217,35 +253,13 @@
                                             <th>ID</th>
                                             <th>Book Details</th>
                                             <th>Borrower</th>
-                                            <th>Date</th>
-                                            <th>Status</th>
+                                            <th>Due Date</th>
+                                            <th>Status / Fine</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><span class="text-muted">#TX1440</span></td>
-                                            <td><strong>The Martian</strong><br><span class="text-xs text-muted">Andy
-                                                    Weir</span></td>
-                                            <td>Alice Smith</td>
-                                            <td>Today, 10:45 AM</td>
-                                            <td><span class="status-badge bg-blue">Issued</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="text-muted">#TX1439</span></td>
-                                            <td><strong>Dune</strong><br><span class="text-xs text-muted">Frank
-                                                    Herbert</span></td>
-                                            <td>Bob Johnson</td>
-                                            <td>Today, 09:15 AM</td>
-                                            <td><span class="status-badge bg-green">Returned</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="text-muted">#TX1402</span></td>
-                                            <td><strong>Clean Code</strong><br><span class="text-xs text-muted">Robert
-                                                    C. Martin</span></td>
-                                            <td>Charlie Davis</td>
-                                            <td>Oct 10, 2023</td>
-                                            <td><span class="status-badge bg-red">Overdue</span></td>
-                                        </tr>
+                                    <tbody id="manager-transactions-tbody">
+                                        <!-- Computed in JS -->
                                     </tbody>
                                 </table>
                             </div>
@@ -294,9 +308,9 @@
                             <h2>Books Catalog</h2>
                             <p>Search library titles and monitor stock availability.</p>
                         </div>
-                        <!-- Only Managers see Add New Book -->
-                        <button class="btn btn-primary shadow-glow role-manager"><i class='bx bx-plus'></i> Add
-                            Title</button>
+                        <button class="btn btn-primary shadow-glow role-manager" onclick="document.getElementById('add-book-modal').style.display='flex'">
+                            <i class='bx bx-plus'></i> Add Title
+                        </button>
                     </div>
 
                     <div class="glass-panel p-0">
@@ -495,7 +509,59 @@
                         <input type="number" id="student-batch" placeholder="E.g. 2024" min="2000" max="2100" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary full-width shadow-glow">Save Details <i class='bx bx-check'></i></button>
+                <button type="submit" class="btn btn-primary full-width shadow-glow">Save Details <i
+                        class='bx bx-check'></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manager Add Book Modal -->
+    <div id="add-book-modal" class="login-wrapper fade-in" style="display: none; z-index: 1100;">
+        <div class="glass-panel login-box" style="width: 480px;">
+            <div class="flex-between mb-2">
+                <div class="logo">
+                    <div class="logo-icon"><i class='bx bx-book-add'></i></div>
+                    <span class="text-main text-xl font-bold">Add New Title</span>
+                </div>
+                <i class='bx bx-x' style="font-size: 1.5rem; cursor: pointer; color: var(--text-muted);" onclick="document.getElementById('add-book-modal').style.display='none'"></i>
+            </div>
+            
+            <form id="add-book-form" class="custom-form">
+                <div class="form-group">
+                    <label>Book Title</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-text'></i>
+                        <input type="text" id="add-title" placeholder="E.g. Introduction to Algorithms" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Author</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-edit-alt'></i>
+                        <input type="text" id="add-author" placeholder="E.g. Thomas H. Cormen" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-category'></i>
+                        <select id="add-category" class="styled-select" required>
+                            <option value="Technology">Technology</option>
+                            <option value="Science">Science</option>
+                            <option value="History">History</option>
+                            <option value="Literature">Literature</option>
+                            <option value="Self-Help">Self-Help</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Total Copies Stock</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-layer'></i>
+                        <input type="number" id="add-stock" placeholder="E.g. 5" min="1" max="100" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success full-width shadow-glow">Add Book to Catalog <i class='bx bx-check'></i></button>
             </form>
         </div>
     </div>

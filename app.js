@@ -71,7 +71,6 @@ const UsersDB = {
     }
 };
 
-// Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     UsersDB.init(); // Initialize LocalStorage Backend
     initLogin();
@@ -79,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initDateInput();
     initNotifications();
     initStudentDetailsForm();
+    initProfileDropdown();
+    initAddBookForm();
 });
 
 // Login Logic
@@ -166,6 +167,7 @@ function initLogin() {
             renderBooks();
             if(role === 'manager') {
                 renderMembers();
+                renderManagerTransactions();
             } else {
                 renderMyBooks();
             }
@@ -230,6 +232,89 @@ function initNotifications() {
             if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
             }
+        });
+    }
+}
+
+// Social Login Mock
+window.socialLoginMock = function() {
+    addNotification("Logged in via Google Authentication.");
+    document.getElementById('login-email').value = "student@nexus.edu";
+    document.getElementById('login-password').value = "password123";
+    document.getElementById('login-role').value = "student";
+    document.getElementById('auth-submit-btn').click();
+};
+
+function initProfileDropdown() {
+    const trigger = document.getElementById('profile-trigger');
+    const dropdown = document.getElementById('profile-dropdown');
+    
+    if (trigger && dropdown) {
+        trigger.addEventListener('click', () => {
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible && state.currentUser) {
+                // Populate profile data
+                const displayName = state.currentUser.name || state.currentUser.email.split('@')[0];
+                document.getElementById('dropdown-avatar').src = `https://ui-avatars.com/api/?name=${displayName.replace(' ', '+')}&background=6366f1&color=fff&rounded=true&bold=true`;
+                document.getElementById('dropdown-name').innerText = displayName;
+                let roleStr = "Student";
+                if (state.currentUser.role === 'manager') roleStr = "Library Manager";
+                if (state.currentUser.role === 'faculty') roleStr = "Faculty Member";
+                document.getElementById('dropdown-role').innerText = roleStr;
+                document.getElementById('dropdown-email').innerText = state.currentUser.email;
+                
+                const studentDetails = document.getElementById('dropdown-student-details');
+                if (state.currentUser.role === 'student' && state.currentUser.regNum) {
+                    document.getElementById('dropdown-reg').innerText = `Reg No: ${state.currentUser.regNum}`;
+                    document.getElementById('dropdown-degree').innerText = state.currentUser.degree;
+                    document.getElementById('dropdown-branch').innerText = state.currentUser.branch;
+                    studentDetails.style.display = 'block';
+                } else {
+                    studentDetails.style.display = 'none';
+                }
+            }
+        });
+        
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+}
+
+function initAddBookForm() {
+    const form = document.getElementById('add-book-form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('add-title').value;
+            const author = document.getElementById('add-author').value;
+            const category = document.getElementById('add-category').value;
+            const stock = parseInt(document.getElementById('add-stock').value);
+            
+            const newBook = {
+                id: 'B-' + Math.floor(1000 + Math.random() * 9000),
+                title: title,
+                author: author,
+                category: category,
+                stock: stock,
+                total: stock,
+                status: 'Available'
+            };
+            
+            state.books.unshift(newBook);
+            
+            // Close modal
+            document.getElementById('add-book-modal').style.display = 'none';
+            form.reset();
+            
+            addNotification(`Success! New title "${title}" added to catalog.`);
+            renderBooks();
         });
     }
 }
@@ -505,27 +590,107 @@ function renderMembers() {
     if(!tbody) return;
     
     tbody.innerHTML = '';
-    state.members.forEach(member => {
-        const badgeClass = member.status === 'Active' ? 'bg-blue' : 'bg-gray';
-        const roleIcon = member.type === 'Student' ? 'bx-user' : (member.type === 'Faculty' ? 'bx-user-pin' : 'bx-id-card');
+    const allUsers = UsersDB.getUsers();
+    
+    allUsers.forEach(user => {
+        // Find how many active loans/reservations this user theoretically has.
+        // For our local mock, we assume 'myHistory' is global for demo purposes, 
+        // but typically we'd map it to the user. Let's just use a random seed or the global history if it's the current user.
+        let borrowedCount = user.role === 'student' ? state.myHistory.filter(h => h.status !== 'Returned').length : 0;
+        
+        const badgeClass = 'bg-blue';
+        const roleIcon = user.role === 'student' ? 'bx-user' : (user.role === 'faculty' ? 'bx-user-pin' : 'bx-id-card');
+        const readableRole = user.role === 'manager' ? 'Library Manager' : (user.role === 'faculty' ? 'Faculty' : 'Student');
+        const displayName = user.name || user.email.split('@')[0];
         
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><span class="text-muted">#${member.id}</span></td>
+            <td><span class="text-muted">${user.regNum || '-'}</span></td>
             <td>
                 <div style="display:flex; align-items:center; gap:0.75rem;">
-                    <img src="https://ui-avatars.com/api/?name=${member.name.replace(' ', '+')}&background=random&color=fff&rounded=true" alt="${member.name}" style="width:32px; height:32px; border-radius:50%; object-fit: cover;">
-                    <strong>${member.name}</strong>
+                    <img src="https://ui-avatars.com/api/?name=${displayName.replace(' ', '+')}&background=random&color=fff&rounded=true" alt="${displayName}" style="width:32px; height:32px; border-radius:50%; object-fit: cover;">
+                    <div>
+                        <strong>${displayName}</strong><br>
+                        <span class="text-xs text-muted">${user.email}</span>
+                    </div>
                 </div>
             </td>
-            <td><i class='bx ${roleIcon} text-muted'></i> ${member.type}</td>
-            <td>${member.borrowed} books</td>
-            <td><span class="status-badge ${badgeClass}">${member.status}</span></td>
+            <td><i class='bx ${roleIcon} text-muted'></i> ${readableRole}</td>
+            <td>${borrowedCount} items</td>
+            <td><span class="status-badge ${badgeClass}">Active</span></td>
             <td>
-                <button class="btn-icon" title="View History"><i class='bx bx-history'></i></button>
-                <button class="btn-icon" title="Edit Profile"><i class='bx bx-edit'></i></button>
+                <button class="btn-icon" title="View History" onclick="alert('Viewing history for ${displayName}')"><i class='bx bx-history'></i></button>
             </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+function renderManagerTransactions() {
+    const tbody = document.getElementById('manager-transactions-tbody');
+    if(!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    // We display the global myHistory as the global "transactions" for the manager dashboard
+    state.myHistory.forEach(item => {
+        // Calculate fines
+        let fine = 0;
+        let statusBadge = '';
+        
+        if (item.status === 'Returned') {
+            statusBadge = `<span class="status-badge bg-green">Returned</span>`;
+        } else if (item.status === 'Reserved') {
+            statusBadge = `<span class="status-badge bg-warning">Reserved</span>`;
+        } else {
+            // Active Loan - check if overdue
+            const today = new Date();
+            const due = new Date(item.dueDate);
+            
+            if (today > due && item.status !== 'Returned') {
+                const diffTime = Math.abs(today - due);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                fine = diffDays * 1.00; // $1 per day
+                statusBadge = `<span class="status-badge bg-red">Overdue ($${fine.toFixed(2)})</span>`;
+            } else {
+                statusBadge = `<span class="status-badge bg-blue">Issued</span>`;
+            }
+        }
+        
+        // Mock borrower name
+        let borrower = "Student User";
+        if (state.currentUser && state.currentUser.role === 'student') borrower = state.currentUser.name || "Student User";
+        
+        const actionBtn = item.status === 'Returned' ? '-' : `<button class="btn btn-outline text-xs text-green" onclick="returnOverdue('${item._id}', '${item.id}')">Process Return</button>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span class="text-muted">#${item.id}</span></td>
+            <td><strong>${item.title}</strong><br><span class="text-xs text-muted">${item.author}</span></td>
+            <td>${borrower}</td>
+            <td>${item.dueDate}</td>
+            <td>${statusBadge}</td>
+            <td>${actionBtn}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.returnOverdue = function(historyId, bookId) {
+    if(confirm("Confirm return and clear any fines?")) {
+        const hItem = state.myHistory.find(i => i._id === historyId);
+        if(hItem) hItem.status = 'Returned';
+        
+        const bookIndex = state.books.findIndex(b => b.id === bookId);
+        if (bookIndex !== -1) {
+            state.books[bookIndex].stock += 1;
+            if (state.books[bookIndex].stock === 1) {
+                state.books[bookIndex].status = 'Available';
+            }
+        }
+        
+        addNotification(`Book #${bookId} has been marked as returned.`);
+        renderManagerTransactions();
+        renderBooks();
+    }
 }
