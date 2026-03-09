@@ -287,14 +287,22 @@
                                     <h2>$0.00</h2>
                                 </div>
                             </div>
-                            <div class="stat-card glass-panel" style="grid-column: span 2;">
-                                <div class="stat-info p-2">
-                                    <h3 class="text-xl text-main font-bold">Welcome to Nexus LMS</h3>
-                                    <p class="text-muted mt-2" style="font-size: 0.9rem;">
-                                        Use the sidebar navigation to browse the book catalog. You can instantly reserve
-                                        books online, and then collect them physically by showing your Campus ID at the
-                                        checkout desk within 48 hours.
+                            <div class="stat-card glass-panel" style="grid-column: span 2; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(99, 102, 241, 0.3);">
+                                <div class="stat-info p-2" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                        <div class="stat-icon-wrapper" style="background: rgba(99, 102, 241, 0.2); color: var(--primary); width: 40px; height: 40px;">
+                                            <i class='bx bx-compass' style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <h3 class="text-xl text-main font-bold">Discover Your Next Great Read</h3>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">
+                                        The Nexus Catalog has just been updated with new titles in Technology, Design, and Science Fiction. Jump in, reserve your copies online instantly, and bypass the checkout lines.
                                     </p>
+                                    <div>
+                                        <button class="btn btn-primary shadow-glow text-sm" onclick="document.querySelector('.nav-item[data-target=\'books\']').click()">
+                                            <i class='bx bx-search-alt'></i> Explore Catalog
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -426,8 +434,7 @@
                                         <input type="date" required id="due-date-input">
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-primary full-width shadow-glow"
-                                    onclick="alert('Book Issued successfully!')">Complete Issue</button>
+                                <button type="submit" class="btn btn-primary full-width shadow-glow">Complete Issue</button>
                             </form>
                         </div>
 
@@ -439,7 +446,14 @@
                                     <label>Book Barcode / ISBN</label>
                                     <div class="input-with-icon">
                                         <i class='bx bx-barcode-reader'></i>
-                                        <input type="text" placeholder="Scan book to return..." required>
+                                        <input type="text" id="return-book-id" placeholder="Scan book to return..." required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Library Member ID (Returning)</label>
+                                    <div class="input-with-icon">
+                                        <i class='bx bx-user-check'></i>
+                                        <input type="text" id="return-member-id" placeholder="Who is returning this?" required>
                                     </div>
                                 </div>
 
@@ -455,8 +469,7 @@
                                     </div>
                                 </div>
 
-                                <button type="button" class="btn btn-success full-width shadow-glow"
-                                    onclick="alert('Book Returned successfully!')">Confirm Return</button>
+                                <button type="submit" class="btn btn-success full-width shadow-glow">Confirm Return</button>
                             </form>
                         </div>
                     </div>
@@ -499,7 +512,16 @@
                     <label>Branch / Department</label>
                     <div class="input-with-icon">
                         <i class='bx bx-git-branch'></i>
-                        <input type="text" id="student-branch" placeholder="E.g. Computer Science" required>
+                        <select id="student-branch" class="styled-select" required>
+                            <option value="" disabled selected>Select your branch</option>
+                            <option value="Computer Science (CSE)">Computer Science (CSE)</option>
+                            <option value="Artificial Intelligence (AIML)">Artificial Intelligence (AIML)</option>
+                            <option value="Cybersecurity">Cybersecurity</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Information Technology (IT)">Information Technology (IT)</option>
+                            <option value="Software Engineering">Software Engineering</option>
+                            <option value="Electronics (ECE)">Electronics (ECE)</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group mb-2">

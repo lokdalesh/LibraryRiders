@@ -28,7 +28,7 @@ const UsersDB = {
             // Seed DB with some default users if empty
             localStorage.setItem('nexus_users', JSON.stringify([
                 { email: 'student@nexus.edu', name: 'Demo Student', password: 'password123', role: 'student' },
-                { email: 'manager@nexus.edu', name: 'Demo Manager', password: 'password123', role: 'manager' }
+                { email: 'lohitha.24bcw7073@vitapstudent.ac.in', name: 'Lohitha (Manager)', password: 'password123', role: 'manager' }
             ]));
         }
     },
@@ -36,6 +36,18 @@ const UsersDB = {
         return JSON.parse(localStorage.getItem('nexus_users')) || [];
     },
     createUser: function(userObj) {
+        // Manager Email Allowlist Check
+        if (userObj.role === 'manager') {
+            const allowedManagers = [
+                'lohitha.24bcw7073@vitapstudent.ac.in',
+                'dalesh.24bcs7138@vitapstudent.ac.in',
+                'reshma.24bce8167@vitapstudent.ac.in'
+            ];
+            if (!allowedManagers.includes(userObj.email.toLowerCase())) {
+                return { success: false, message: 'Unauthorized. This email is not approved for Library Manager access.' };
+            }
+        }
+
         const users = this.getUsers();
         if (users.find(u => u.email === userObj.email)) {
             return { success: false, message: 'Email address is already registered.' };
@@ -49,8 +61,20 @@ const UsersDB = {
         return { success: true, user: userObj };
     },
     loginUser: function(email, password, role) {
+        // Manager Email Allowlist Check
+        if (role === 'manager') {
+            const allowedManagers = [
+                'lohitha.24bcw7073@vitapstudent.ac.in',
+                'dalesh.24bcs7138@vitapstudent.ac.in',
+                'reshma.24bce8167@vitapstudent.ac.in'
+            ];
+            if (!allowedManagers.includes(email.toLowerCase())) {
+                return { success: false, message: 'Unauthorized. This email is not approved for Library Manager access.' };
+            }
+        }
+
         const users = this.getUsers();
-        const user = users.find(u => u.email === email && u.role === role);
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
         if (!user) {
             return { success: false, message: 'No account found for this email and role combination.' };
         }
@@ -80,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initStudentDetailsForm();
     initProfileDropdown();
     initAddBookForm();
+    initManagerForms();
 });
 
 // Login Logic
@@ -366,6 +391,7 @@ function renderNotifications() {
     });
 }
 
+// Navigation Logic
 function applyRolePermissions() {
     const isManager = state.currentUser.role === 'manager';
     
@@ -381,7 +407,24 @@ function applyRolePermissions() {
     const managerStats = document.getElementById('manager-stats');
     const memberStats = document.getElementById('member-stats');
     
-    if(managerStats) managerStats.style.display = isManager ? 'block' : 'none';
+    if(managerStats && isManager) {
+        managerStats.style.display = 'block';
+        
+        // Update Dynamic Stats
+        const totalBooks = state.books.reduce((sum, b) => sum + b.total, 0);
+        const activeMembersCount = UsersDB.getUsers().filter(u => u.role !== 'manager').length;
+        const issuedCount = state.myHistory.filter(h => h.status !== 'Returned' && h.status !== 'Reserved').length;
+        
+        const cards = managerStats.querySelectorAll('.counter');
+        if (cards.length >= 3) {
+            cards[0].innerText = totalBooks;
+            cards[1].innerText = activeMembersCount;
+            cards[2].innerText = issuedCount;
+        }
+    } else if (managerStats) {
+        managerStats.style.display = 'none';
+    }
+    
     if(memberStats) memberStats.style.display = !isManager ? 'block' : 'none';
     
     // Reset Navigation to dashboard
@@ -657,11 +700,21 @@ function renderManagerTransactions() {
             }
         }
         
-        // Mock borrower name
-        let borrower = "Student User";
-        if (state.currentUser && state.currentUser.role === 'student') borrower = state.currentUser.name || "Student User";
+        // Use actual borrower name based on the record if available, else current state
+        let borrower = item.borrowedBy || item.borrowerReg || "Student User";
         
-        const actionBtn = item.status === 'Returned' ? '-' : `<button class="btn btn-outline text-xs text-green" onclick="returnOverdue('${item._id}', '${item.id}')">Process Return</button>`;
+        // Let's also include their Reg Number clearly if available
+        let borrowerDisplay = borrower;
+        if (item.borrowerReg && item.borrowerReg !== borrower) {
+            borrowerDisplay = `${borrower} (${item.borrowerReg})`;
+        }
+        
+        let actionBtn = '-';
+        if (item.status === 'Reserved') {
+            actionBtn = `<button class="btn btn-outline text-xs text-blue" onclick="approveReservation('${item._id}')">Approve Issue</button>`;
+        } else if (item.status !== 'Returned') {
+            actionBtn = `<button class="btn btn-outline text-xs text-green" onclick="returnOverdue('${item._id}', '${item.id}')">Process Return</button>`;
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -677,7 +730,7 @@ function renderManagerTransactions() {
 }
 
 window.returnOverdue = function(historyId, bookId) {
-    if(confirm("Confirm return and clear any fines?")) {
+    if(confirm("Process this return? For overdue items, this automatically clears the student's fine balance.")) {
         const hItem = state.myHistory.find(i => i._id === historyId);
         if(hItem) hItem.status = 'Returned';
         
@@ -689,8 +742,122 @@ window.returnOverdue = function(historyId, bookId) {
             }
         }
         
-        addNotification(`Book #${bookId} has been marked as returned.`);
+        addNotification(`Book #${bookId} returned successfully. Student dues cleared.`);
         renderManagerTransactions();
         renderBooks();
+    }
+}
+
+window.approveReservation = function(historyId) {
+    if(confirm("Approve this reservation? This will officially issue the book and begin the borrowing period.")) {
+        const hItem = state.myHistory.find(i => i._id === historyId);
+        if(hItem) {
+            hItem.status = 'Active Loan';
+            const due = new Date();
+            due.setDate(due.getDate() + 14); // 2 weeks default borrow period instead of 48h collect
+            hItem.dueDate = due.toISOString().split('T')[0];
+            
+            addNotification(`Reservation approved! Book #${hItem.id} officially issued.`);
+            renderManagerTransactions();
+        }
+    }
+}
+
+// Manager Actions: Manual Issue & Return
+function initManagerForms() {
+    const issueForm = document.getElementById('issue-form');
+    if (issueForm) {
+        issueForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const memberId = issueForm.querySelector('input[type="text"]').value.trim();
+            const bookId = issueForm.querySelectorAll('input[type="text"]')[1].value.trim();
+            const dueDate = document.getElementById('due-date-input').value;
+
+            if (!memberId || !bookId || !dueDate) return;
+
+            // 1. Find Book
+            const bookItem = state.books.find(b => b.id === bookId || b.id === 'B-'+bookId || b.title.toLowerCase().includes(bookId.toLowerCase()));
+            if (!bookItem) {
+                addNotification("Book not found in Catalog.", "error"); return;
+            }
+            if (bookItem.stock < 1) {
+                addNotification("Book is currently out of stock.", "error"); return;
+            }
+            
+            // 2. Find User
+            const users = UsersDB.getUsers();
+            let targetUser = users.find(u => u.regNum === memberId || u.email.includes(memberId) || u.name.includes(memberId));
+            
+            if (!targetUser) {
+                // If not found, warn manager but allow override with string identifier
+                if(!confirm(`No registered user found for "${memberId}". Issue anyway?`)) return;
+                targetUser = { name: memberId, regNum: memberId, email: "Unknown", role: "student" };
+            }
+
+            // 3. Create active loan
+            const historyItem = {
+                _id: 'H-' + Math.floor(Math.random() * 10000),
+                id: bookItem.id,
+                title: bookItem.title,
+                author: bookItem.author,
+                borrowDate: new Date().toISOString().split('T')[0],
+                dueDate: dueDate,
+                status: 'Active Loan',
+                borrowedBy: targetUser.name,
+                borrowerReg: targetUser.regNum || memberId // Store explicitly for UI
+            };
+
+            state.myHistory.unshift(historyItem);
+            bookItem.stock -= 1;
+            if (bookItem.stock === 0) bookItem.status = 'Borrowed';
+
+            addNotification(`${bookItem.title} successfully issued to ${targetUser.name || memberId}.`);
+            issueForm.reset();
+            renderBooks();
+            renderManagerTransactions();
+        });
+    }
+
+    const returnForm = document.getElementById('return-form');
+    if (returnForm) {
+        returnForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const scanId = document.getElementById('return-book-id').value.trim();
+            const memberId = document.getElementById('return-member-id').value.trim();
+            
+            if (!scanId || !memberId) return;
+
+            // Find active loan in history by book ID or Title AND matching the Member's identifier
+            const loanIndex = state.myHistory.findIndex(h => 
+                (h.id === scanId || h.id === 'B-'+scanId || h.title.toLowerCase().includes(scanId.toLowerCase())) 
+                && (h.borrowerReg === memberId || h.borrowedBy.toLowerCase().includes(memberId.toLowerCase()) || h.borrowerReg === undefined)
+                && h.status !== 'Returned'
+            );
+
+            if (loanIndex !== -1) {
+                const hItem = state.myHistory[loanIndex];
+                hItem.status = 'Returned';
+                
+                const bookIndex = state.books.findIndex(b => b.id === hItem.id);
+                if (bookIndex !== -1) {
+                    state.books[bookIndex].stock += 1;
+                    state.books[bookIndex].status = 'Available';
+                }
+
+                const today = new Date();
+                const due = new Date(hItem.dueDate);
+                let msg = `Book #${hItem.id} explicitly returned by ${memberId}.`;
+                if (today > due) {
+                    msg += " Late fine successfully cleared.";
+                }
+
+                addNotification(msg);
+                renderManagerTransactions();
+                renderBooks();
+                returnForm.reset();
+            } else {
+                addNotification(`No active loan found for Book "${scanId}" under Member "${memberId}".`, "error");
+            }
+        });
     }
 }
