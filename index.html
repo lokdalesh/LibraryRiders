@@ -21,13 +21,21 @@
                 <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
                 <span class="text-main text-xl font-bold">Nexus LMS</span>
             </div>
-            <h3 class="text-center mb-2 text-muted fw-500">Sign in to your account</h3>
+            <h3 class="text-center mb-2 text-muted fw-500" id="auth-title">Sign in to your account</h3>
             <form id="login-form" class="custom-form">
                 <div class="form-group">
-                    <label>Username / Library ID</label>
+                    <label>Email Address</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-envelope'></i>
+                        <input type="email" id="login-email" placeholder="E.g. user@university.edu" required>
+                    </div>
+                </div>
+                <!-- Only required for Sign Up but we show it dynamically -->
+                <div class="form-group" id="name-group" style="display: none;">
+                    <label>Full Name</label>
                     <div class="input-with-icon">
                         <i class='bx bx-user'></i>
-                        <input type="text" id="login-username" placeholder="E.g. lokda, jsmith..." required>
+                        <input type="text" id="login-name" placeholder="E.g. Alice Smith">
                     </div>
                 </div>
                 <div class="form-group">
@@ -45,10 +53,18 @@
                     <label>Password</label>
                     <div class="input-with-icon">
                         <i class='bx bx-lock-alt'></i>
-                        <input type="password" id="login-password" placeholder="Enter password (any value)" required value="password">
+                        <input type="password" id="login-password" placeholder="Min 6 characters" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary full-width shadow-glow">Login to Portal <i class='bx bx-right-arrow-alt'></i></button>
+                <p id="auth-error" class="text-red text-sm text-center" style="display: none;"></p>
+                <button type="submit" class="btn btn-primary full-width shadow-glow" id="auth-submit-btn">Login to Portal <i class='bx bx-right-arrow-alt'></i></button>
+                
+                <div class="text-center mt-2">
+                    <span class="text-muted text-sm">
+                        <span id="auth-toggle-text">Don't have an account?</span> 
+                        <a href="#" id="auth-toggle-link" class="text-blue font-bold" style="text-decoration: none;">Sign Up</a>
+                    </span>
+                </div>
             </form>
         </div>
     </div>

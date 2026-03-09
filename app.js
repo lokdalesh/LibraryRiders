@@ -1,6 +1,6 @@
 // App State & Mock Data
 const state = {
-    currentUser: null, // { name, role }
+    currentUser: null, // { email, name, role }
     books: [
         { id: 'B-1001', title: 'The Pragmatic Programmer', author: 'Andy Hunt', category: 'Technology', stock: 3, total: 5, status: 'Available' },
         { id: 'B-1002', title: 'Design Patterns', author: 'Erich Gamma', category: 'Technology', stock: 0, total: 2, status: 'Out of Stock' },
@@ -12,7 +12,7 @@ const state = {
         { id: 'M-5280', name: 'Alice Smith', type: 'Student', borrowed: 2, status: 'Active' },
         { id: 'M-5281', name: 'Bob Johnson', type: 'Faculty', borrowed: 4, status: 'Active' },
         { id: 'M-5282', name: 'Charlie Davis', type: 'Student', borrowed: 1, status: 'Suspended' },
-        { id: 'M-5283', name: 'Diana Ross', type: 'Staff', borrowed: 0, status: 'Active' },
+        { id: 'M-5283', name: 'Diana Ross', type: 'Library Manager', borrowed: 0, status: 'Active' },
     ],
     myHistory: [
         { id: 'B-1004', title: 'Atomic Habits', author: 'James Clear', borrowDate: '2023-11-01', dueDate: '2023-11-15', status: 'Active Loan' },
@@ -20,8 +20,49 @@ const state = {
     ]
 };
 
+// Simulated Backend API for Users
+const UsersDB = {
+    init: function() {
+        if (!localStorage.getItem('nexus_users')) {
+            // Seed DB with some default users if empty
+            localStorage.setItem('nexus_users', JSON.stringify([
+                { email: 'student@nexus.edu', name: 'Demo Student', password: 'password123', role: 'student' },
+                { email: 'manager@nexus.edu', name: 'Demo Manager', password: 'password123', role: 'manager' }
+            ]));
+        }
+    },
+    getUsers: function() {
+        return JSON.parse(localStorage.getItem('nexus_users')) || [];
+    },
+    createUser: function(userObj) {
+        const users = this.getUsers();
+        if (users.find(u => u.email === userObj.email)) {
+            return { success: false, message: 'Email address is already registered.' };
+        }
+        users.push(userObj);
+        localStorage.setItem('nexus_users', JSON.stringify(users));
+        
+        // Also add them to the mock members list (to display in manager view)
+        state.members.push({ id: 'M-' + Math.floor(1000 + Math.random() * 9000), name: userObj.name, type: userObj.role.charAt(0).toUpperCase() + userObj.role.slice(1), borrowed: 0, status: 'Active' });
+        
+        return { success: true, user: userObj };
+    },
+    loginUser: function(email, password, role) {
+        const users = this.getUsers();
+        const user = users.find(u => u.email === email && u.role === role);
+        if (!user) {
+            return { success: false, message: 'No account found for this email and role combination.' };
+        }
+        if (user.password !== password) {
+            return { success: false, message: 'Incorrect password. Please try again.' };
+        }
+        return { success: true, user: user };
+    }
+};
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
+    UsersDB.init(); // Initialize LocalStorage Backend
     initLogin();
     initNavigation();
     initDateInput();
@@ -29,22 +70,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Login Logic
 function initLogin() {
+    let mode = 'login'; // 'login' or 'signup'
+    
     const loginForm = document.getElementById('login-form');
+    const toggleLink = document.getElementById('auth-toggle-link');
+    const toggleText = document.getElementById('auth-toggle-text');
+    const authTitle = document.getElementById('auth-title');
+    const authBtn = document.getElementById('auth-submit-btn');
+    const nameGroup = document.getElementById('name-group');
+    const errorEl = document.getElementById('auth-error');
+    
+    // Toggle Mode
+    if(toggleLink) {
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            errorEl.style.display = 'none';
+            if (mode === 'login') {
+                mode = 'signup';
+                authTitle.innerText = 'Create your account';
+                nameGroup.style.display = 'block';
+                document.getElementById('login-name').required = true;
+                authBtn.innerHTML = "Register Account <i class='bx bx-check'></i>";
+                toggleText.innerText = "Already have an account?";
+                toggleLink.innerText = "Log In";
+            } else {
+                mode = 'login';
+                authTitle.innerText = 'Sign in to your account';
+                nameGroup.style.display = 'none';
+                document.getElementById('login-name').required = false;
+                authBtn.innerHTML = "Login to Portal <i class='bx bx-right-arrow-alt'></i>";
+                toggleText.innerText = "Don't have an account?";
+                toggleLink.innerText = "Sign Up";
+            }
+        });
+    }
+
     if(loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            errorEl.style.display = 'none';
             
-            const username = document.getElementById('login-username').value;
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             const role = document.getElementById('login-role').value;
+            const name = document.getElementById('login-name').value;
+            
+            // Password Validation
+            if (password.length < 6) {
+                errorEl.innerText = "Password must be at least 6 characters long.";
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            let result;
+            if (mode === 'signup') {
+                result = UsersDB.createUser({ email, password, role, name });
+            } else {
+                result = UsersDB.loginUser(email, password, role);
+            }
+            
+            if (!result.success) {
+                // Show Error from Backend
+                errorEl.innerText = result.message;
+                errorEl.style.display = 'block';
+                return;
+            }
             
             // Set App State
-            state.currentUser = { name: username, role: role };
+            state.currentUser = result.user;
             
             // Setup Profile UI
             const readableRole = role === 'manager' ? 'Library Manager' : (role === 'faculty' ? 'Faculty Member' : 'Student');
-            document.getElementById('top-user-name').innerText = username;
+            const displayName = result.user.name || result.user.email.split('@')[0];
+            document.getElementById('top-user-name').innerText = displayName;
             document.getElementById('top-user-role').innerText = readableRole;
-            document.getElementById('top-user-avatar').src = `https://ui-avatars.com/api/?name=${username.replace(' ', '+')}&background=6366f1&color=fff&rounded=true&bold=true`;
+            document.getElementById('top-user-avatar').src = `https://ui-avatars.com/api/?name=${displayName.replace(' ', '+')}&background=6366f1&color=fff&rounded=true&bold=true`;
             
             // Apply Permissions layout
             applyRolePermissions();
