@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Premium Library Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-container" class="login-wrapper fade-in">
+        <div class="glass-panel login-box">
+            <div class="logo justify-center mb-2">
+                <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
+                <span class="text-main text-xl font-bold">Nexus LMS</span>
+            </div>
+            <h3 class="text-center mb-2 text-muted fw-500">Sign in to your account</h3>
+            <form id="login-form" class="custom-form">
+                <div class="form-group">
+                    <label>Username / Library ID</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-user'></i>
+                        <input type="text" id="login-username" placeholder="E.g. lokda, jsmith..." required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Account Role</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-id-card'></i>
+                        <select id="login-role" class="styled-select" required>
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="manager">Library Manager</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Password</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-lock-alt'></i>
+                        <input type="password" id="login-password" placeholder="Enter password (any value)" required value="password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary full-width shadow-glow">Login to Portal <i class='bx bx-right-arrow-alt'></i></button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Main Application UI -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
+                <span>Nexus LMS</span>
+            </div>
+            <div class="nav-section">MAIN MENU</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-target="dashboard">
+                    <i class='bx bx-grid-alt'></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" data-target="books">
+                    <i class='bx bx-book'></i>
+                    <span>Books Catalog</span>
+                </li>
+                
+                <!-- Only Student & Faculty See This -->
+                <li class="nav-item role-member" data-target="my-books" style="display: none;">
+                    <i class='bx bx-history'></i>
+                    <span>My Borrowed History</span>
+                </li>
+
+                <!-- Only Library Manager Sees These -->
+                <li class="nav-item role-manager" data-target="members">
+                    <i class='bx bx-group'></i>
+                    <span>Members Directory</span>
+                </li>
+                <li class="nav-item role-manager" data-target="transactions">
+                    <i class='bx bx-transfer'></i>
+                    <span>Issue & Return</span>
+                </li>
+            </ul>
+            
+            <div class="nav-section mt-auto">SETTINGS</div>
+            <ul class="nav-menu">
+                <li class="nav-item" onclick="location.reload()">
+                    <i class='bx bx-log-out'></i>
+                    <span>Logout</span>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header glass-panel">
+                <div class="search-bar">
+                    <i class='bx bx-search'></i>
+                    <input type="text" placeholder="Search catalog, or enter ISBN...">
+                </div>
+                <div class="user-profile">
+                    <div class="notification-btn">
+                        <i class='bx bx-bell'></i>
+                        <span class="badge pulse-anim">1</span>
+                    </div>
+                    <div class="avatar-group">
+                        <img id="top-user-avatar" src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&rounded=true&bold=true" alt="User" class="avatar">
+                        <div class="user-info">
+                            <span class="user-name" id="top-user-name">User Name</span>
+                            <span class="user-role" id="top-user-role">Role</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Views Container -->
+            <div class="content-wrapper">
+                
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="page-section active fade-in">
+                    <div class="section-header">
+                        <h2>System Dashboard</h2>
+                        <p>Welcome back to your library portal.</p>
+                    </div>
+                    
+                    <!-- LIBRARY MANAGER STATS -->
+                    <div id="manager-stats">
+                        <div class="stats-grid">
+                            <div class="stat-card glass-panel">
+                                <div class="stat-icon-wrapper blue">
+                                    <i class='bx bx-book-content'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Total Collection</h3>
+                                    <h2 class="counter">12,450</h2>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-panel">
+                                <div class="stat-icon-wrapper green">
+                                    <i class='bx bx-user-check'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Active Members</h3>
+                                    <h2 class="counter">3,105</h2>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-panel">
+                                <div class="stat-icon-wrapper purple">
+                                    <i class='bx bx-loader-circle'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Books Issued</h3>
+                                    <h2 class="counter">421</h2>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-panel border-warning">
+                                <div class="stat-icon-wrapper red">
+                                    <i class='bx bx-error'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Overdue Fines</h3>
+                                    <h2>$145.50</h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity Table -->
+                        <div class="recent-activity glass-panel mt-2">
+                            <div class="table-header">
+                                <h3>Recent System Transactions</h3>
+                                <button class="btn btn-outline text-sm">View All</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Book Details</th>
+                                            <th>Borrower</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="text-muted">#TX1440</span></td>
+                                            <td><strong>The Martian</strong><br><span class="text-xs text-muted">Andy Weir</span></td>
+                                            <td>Alice Smith</td>
+                                            <td>Today, 10:45 AM</td>
+                                            <td><span class="status-badge bg-blue">Issued</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-muted">#TX1439</span></td>
+                                            <td><strong>Dune</strong><br><span class="text-xs text-muted">Frank Herbert</span></td>
+                                            <td>Bob Johnson</td>
+                                            <td>Today, 09:15 AM</td>
+                                            <td><span class="status-badge bg-green">Returned</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-muted">#TX1402</span></td>
+                                            <td><strong>Clean Code</strong><br><span class="text-xs text-muted">Robert C. Martin</span></td>
+                                            <td>Charlie Davis</td>
+                                            <td>Oct 10, 2023</td>
+                                            <td><span class="status-badge bg-red">Overdue</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STUDENT/FACULTY STATS -->
+                    <div id="member-stats" style="display: none;">
+                        <div class="stats-grid">
+                            <div class="stat-card glass-panel">
+                                <div class="stat-icon-wrapper blue">
+                                    <i class='bx bx-book-reader'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Currently Borrowed</h3>
+                                    <h2 class="counter">1 Book</h2>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-panel border-warning">
+                                <div class="stat-icon-wrapper red">
+                                    <i class='bx bx-error'></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Pending Fines</h3>
+                                    <h2>$0.00</h2>
+                                </div>
+                            </div>
+                            <div class="stat-card glass-panel" style="grid-column: span 2;">
+                                <div class="stat-info p-2">
+                                    <h3 class="text-xl text-main font-bold">Welcome to Nexus LMS</h3>
+                                    <p class="text-muted mt-2" style="font-size: 0.9rem;">
+                                        Use the sidebar navigation to browse the book catalog. You can instantly reserve books online, and then collect them physically by showing your Campus ID at the checkout desk within 48 hours.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Books Catalog Section -->
+                <section id="books" class="page-section fade-in">
+                    <div class="section-header flex-between">
+                        <div>
+                            <h2>Books Catalog</h2>
+                            <p>Search library titles and monitor stock availability.</p>
+                        </div>
+                        <!-- Only Managers see Add New Book -->
+                        <button class="btn btn-primary shadow-glow role-manager"><i class='bx bx-plus'></i> Add Title</button>
+                    </div>
+                    
+                    <div class="glass-panel p-0">
+                        <div class="table-responsive">
+                            <table class="data-table" id="books-table">
+                                <thead>
+                                    <tr>
+                                        <th>Book ID</th>
+                                        <th>Title & Author</th>
+                                        <th>Category</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="books-tbody">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- My Borrowed History Section (Student/Faculty) -->
+                <section id="my-books" class="page-section fade-in">
+                    <div class="section-header">
+                        <h2>My Borrowed History</h2>
+                        <p>Track your active loans and past reading history.</p>
+                    </div>
+                    
+                    <div class="glass-panel p-0">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Book ID</th>
+                                        <th>Title & Author</th>
+                                        <th>Borrow Date</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="my-books-tbody">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Members Section (Manager Only) -->
+                <section id="members" class="page-section fade-in">
+                    <div class="section-header flex-between">
+                        <div>
+                            <h2>Member Directory</h2>
+                            <p>Manage library users and monitor borrowing privileges.</p>
+                        </div>
+                        <button class="btn btn-primary shadow-glow"><i class='bx bx-user-plus'></i> New Member</button>
+                    </div>
+                    
+                    <div class="glass-panel p-0">
+                        <div class="table-responsive">
+                            <table class="data-table" id="members-table">
+                                <thead>
+                                    <tr>
+                                        <th>Member ID</th>
+                                        <th>Profile</th>
+                                        <th>Role</th>
+                                        <th>Active Loans</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="members-tbody">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Transactions Section (Manager Only) -->
+                <section id="transactions" class="page-section fade-in">
+                    <div class="section-header">
+                        <h2>Issue & Return Operations</h2>
+                        <p>Process desk checkouts, handle returns, and automatically compute fines.</p>
+                    </div>
+                    
+                    <div class="transaction-grid">
+                        <!-- Issue Card -->
+                        <div class="glass-panel form-card">
+                            <div class="card-title text-blue"><i class='bx bx-upload'></i> Issue a Book</div>
+                            <form class="custom-form" id="issue-form">
+                                <div class="form-group">
+                                    <label>Library Member ID</label>
+                                    <div class="input-with-icon">
+                                        <i class='bx bx-user'></i>
+                                        <input type="text" placeholder="Scan or enter user ID..." required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Book Barcode / ISBN</label>
+                                    <div class="input-with-icon">
+                                        <i class='bx bx-barcode'></i>
+                                        <input type="text" placeholder="Scan book barcode..." required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Due Date</label>
+                                    <div class="input-with-icon">
+                                        <i class='bx bx-calendar'></i>
+                                        <input type="date" required id="due-date-input">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary full-width shadow-glow" onclick="alert('Book Issued successfully!')">Complete Issue</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Return Card -->
+                        <div class="glass-panel form-card">
+                            <div class="card-title text-green"><i class='bx bx-download'></i> Process Return</div>
+                            <form class="custom-form" id="return-form">
+                                <div class="form-group">
+                                    <label>Book Barcode / ISBN</label>
+                                    <div class="input-with-icon">
+                                        <i class='bx bx-barcode-reader'></i>
+                                        <input type="text" placeholder="Scan book to return..." required>
+                                    </div>
+                                </div>
+                                
+                                <div class="fine-calculator glass-panel-inner">
+                                    <div class="fine-row">
+                                        <span class="text-muted"><i class='bx bx-info-circle'></i> Overdue Status</span>
+                                        <span class="status-badge bg-gray">Not Checked</span>
+                                    </div>
+                                    <div class="fine-divider"></div>
+                                    <div class="fine-row">
+                                        <span>Estimated Fine</span>
+                                        <span class="fine-amount text-green">$0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-success full-width shadow-glow" onclick="alert('Book Returned successfully!')">Confirm Return</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Temporary deployment bundle
+Nexus_LMS_Bundled.html
+cloudflared.exe
+deploy.py
