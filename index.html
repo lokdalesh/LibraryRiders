@@ -480,7 +480,8 @@
     </div>
     <!-- Student Details Modal -->
     <div id="student-details-modal" class="login-wrapper fade-in" style="display: none; z-index: 1100;">
-        <div class="glass-panel login-box" style="width: 480px;">
+        <div class="glass-panel login-box" style="width: 480px; position: relative;">
+            <i class='bx bx-x' style="position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);" onclick="document.getElementById('student-details-modal').style.display='none'"></i>
             <div class="logo justify-center mb-2">
                 <div class="logo-icon"><i class='bx bxs-graduation'></i></div>
                 <span class="text-main text-xl font-bold">Student Profile</span>

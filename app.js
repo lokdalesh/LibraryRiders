@@ -85,7 +85,7 @@ const UsersDB = {
     },
     updateUser: function(email, details) {
         const users = this.getUsers();
-        const index = users.findIndex(u => u.email === email);
+        const index = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
         if (index !== -1) {
             users[index] = { ...users[index], ...details };
             localStorage.setItem('nexus_users', JSON.stringify(users));
