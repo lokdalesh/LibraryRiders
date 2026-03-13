@@ -32,6 +32,35 @@
     --radius-lg: 20px;
 }
 
+/* Light mode variables */
+:root.light-mode {
+    --bg-base: #f6f8ff;
+    --bg-surface: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.75);
+    --bg-glass-hover: rgba(255, 255, 255, 0.85);
+
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #b91c1c;
+
+    --text-main: #0f172a;
+    --text-muted: #475569;
+
+    --border-glass: rgba(15, 23, 42, 0.1);
+    --shadow-soft: 0 8px 20px -12px rgba(15, 23, 42, 0.2), 0 6px 12px -10px rgba(15, 23, 42, 0.15);
+    --shadow-glow: 0 0 16px rgba(79, 70, 229, 0.35);
+}
+
+/* Smooth transitions for theme changes */
+html {
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+body, .glass-panel, .login-box, .sidebar, .top-header, .data-table {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -428,6 +457,7 @@ body {
 .bg-blue { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
 .bg-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
 .bg-red { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.bg-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .bg-gray { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
 
 /* Forms & Transactions */

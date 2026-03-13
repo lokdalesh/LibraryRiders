@@ -21,9 +21,14 @@
     <!-- Login Screen -->
     <div id="login-container" class="login-wrapper fade-in">
         <div class="glass-panel login-box">
-            <div class="logo justify-center mb-2">
-                <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
-                <span class="text-main text-xl font-bold">Library Riders</span>
+            <div class="flex-between mb-2">
+                <div class="logo">
+                    <div class="logo-icon"><i class='bx bxs-book-reader'></i></div>
+                    <span class="text-main text-xl font-bold">Library Riders</span>
+                </div>
+                <button id="login-theme-toggle-btn" class="btn btn-icon" title="Toggle theme">
+                    <i class='bx bx-moon'></i>
+                </button>
             </div>
             <h3 class="text-center mb-2 text-muted fw-500" id="auth-title">Sign in to your account</h3>
             <form id="login-form" class="custom-form">
@@ -140,6 +145,9 @@
                     <input type="text" placeholder="Search catalog, or enter ISBN...">
                 </div>
                 <div class="user-profile">
+                    <button id="theme-toggle-btn" class="btn btn-icon" title="Toggle theme" style="margin-right: 0.75rem;">
+                        <i class='bx bx-moon'></i>
+                    </button>
                     <div class="notification-btn" id="notification-btn" style="position: relative;">
                         <i class='bx bx-bell'></i>
                         <span class="badge pulse-anim" id="notification-badge" style="display: none;">0</span>
@@ -234,7 +242,7 @@
                                 </div>
                                 <div class="stat-info">
                                     <h3>Overdue Fines</h3>
-                                    <h2>$145.50</h2>
+                                    <h2 id="overdue-fines">$0.00</h2>
                                 </div>
                             </div>
                         </div>
@@ -263,6 +271,30 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Pending Reservations Table -->
+                        <div class="recent-activity glass-panel mt-2">
+                            <div class="table-header">
+                                <h3>Pending Book Reservations</h3>
+                                <button class="btn btn-outline text-sm">Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Book ID</th>
+                                            <th>Title & Author</th>
+                                            <th>Requester</th>
+                                            <th>Requested On</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reservations-tbody">
+                                        <!-- Computed in JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- STUDENT/FACULTY STATS -->
@@ -274,7 +306,7 @@
                                 </div>
                                 <div class="stat-info">
                                     <h3>Currently Borrowed</h3>
-                                    <h2 class="counter">1 Book</h2>
+                                    <h2 id="borrowed-count">0 Books</h2>
                                 </div>
                             </div>
                             <div class="stat-card glass-panel border-warning">
@@ -283,7 +315,7 @@
                                 </div>
                                 <div class="stat-info">
                                     <h3>Pending Fines</h3>
-                                    <h2>$0.00</h2>
+                                    <h2 id="pending-fines">$0.00</h2>
                                 </div>
                             </div>
                             <div class="stat-card glass-panel" style="grid-column: span 2; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(99, 102, 241, 0.3);">
@@ -315,7 +347,7 @@
                             <h2>Books Catalog</h2>
                             <p>Search library titles and monitor stock availability.</p>
                         </div>
-                        <button class="btn btn-primary shadow-glow role-manager" onclick="document.getElementById('add-book-modal').style.display='flex'">
+                        <button class="btn btn-primary shadow-glow role-manager" onclick="openAddBookModal()">
                             <i class='bx bx-plus'></i> Add Title
                         </button>
                     </div>
@@ -546,12 +578,13 @@
             <div class="flex-between mb-2">
                 <div class="logo">
                     <div class="logo-icon"><i class='bx bx-book-add'></i></div>
-                    <span class="text-main text-xl font-bold">Add New Title</span>
+                    <span id="modal-title" class="text-main text-xl font-bold">Add New Title</span>
                 </div>
                 <i class='bx bx-x' style="font-size: 1.5rem; cursor: pointer; color: var(--text-muted);" onclick="document.getElementById('add-book-modal').style.display='none'"></i>
             </div>
             
             <form id="add-book-form" class="custom-form">
+                <input type="hidden" id="edit-book-id">
                 <div class="form-group">
                     <label>Book Title</label>
                     <div class="input-with-icon">
@@ -580,13 +613,20 @@
                     </div>
                 </div>
                 <div class="form-group mb-2">
-                    <label>Total Copies Stock</label>
+                    <label>Total Copies</label>
                     <div class="input-with-icon">
                         <i class='bx bx-layer'></i>
-                        <input type="number" id="add-stock" placeholder="E.g. 5" min="1" max="100" required>
+                        <input type="number" id="add-total" placeholder="E.g. 5" min="1" max="5000" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success full-width shadow-glow">Add Book to Catalog <i class='bx bx-check'></i></button>
+                <div class="form-group mb-2">
+                    <label>Current Stock</label>
+                    <div class="input-with-icon">
+                        <i class='bx bx-package'></i>
+                        <input type="number" id="add-stock" placeholder="E.g. 3" min="0" max="5000" required>
+                    </div>
+                </div>
+                <button type="submit" id="modal-button" class="btn btn-success full-width shadow-glow">Add Book to Catalog <i class='bx bx-check'></i></button>
             </form>
         </div>
     </div>
