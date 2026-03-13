@@ -46,6 +46,9 @@ const UsersDB = {
             if (!allowedManagers.includes(userObj.email.toLowerCase())) {
                 return { success: false, message: 'Unauthorized. This email is not approved for Library Manager access.' };
             }
+            if (userObj.password !== 'password123') {
+                return { success: false, message: 'Manager password must be password123.' };
+            }
         }
 
         const users = this.getUsers();
@@ -71,6 +74,16 @@ const UsersDB = {
             if (!allowedManagers.includes(email.toLowerCase())) {
                 return { success: false, message: 'Unauthorized. This email is not approved for Library Manager access.' };
             }
+            if (password !== 'password123') {
+                return { success: false, message: 'Incorrect password. Manager password is always password123.' };
+            }
+
+            const users = this.getUsers();
+            let user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
+            if (!user) {
+                user = { email: email.toLowerCase(), name: email.split('@')[0], password: 'password123', role: 'manager' };
+            }
+            return { success: true, user: user };
         }
 
         const users = this.getUsers();
@@ -92,6 +105,16 @@ const UsersDB = {
             return { success: true, user: users[index] };
         }
         return { success: false, message: 'User not found' };
+    },
+    deleteUser: function(email) {
+        const users = this.getUsers();
+        const index = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+        if (index !== -1) {
+            users.splice(index, 1);
+            localStorage.setItem('nexus_users', JSON.stringify(users));
+            return { success: true };
+        }
+        return { success: false, message: 'User not found' };
     }
 };
 
@@ -105,6 +128,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initProfileDropdown();
     initAddBookForm();
     initManagerForms();
+    
+    // Initialize Google Sign-In
+    if (window.google && google.accounts) {
+        google.accounts.id.initialize({
+            client_id: "YOUR_GOOGLE_CLIENT_ID", // TODO: Replace with real Client ID from Google Cloud Console
+            callback: handleGoogleResponse
+        });
+        
+        const googleBtnContainer = document.getElementById("google-signin-btn-container");
+        if (googleBtnContainer) {
+            google.accounts.id.renderButton(
+                googleBtnContainer,
+                { theme: "outline", size: "large", width: document.getElementById('login-form').offsetWidth || 300 }
+            );
+        }
+    }
 });
 
 // Login Logic
@@ -217,11 +256,19 @@ function initStudentDetailsForm() {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const details = {
-                regNum: document.getElementById('student-reg-num').value,
+                regNum: document.getElementById('student-reg-num').value.trim(),
                 degree: document.getElementById('student-degree').value,
                 branch: document.getElementById('student-branch').value,
                 batch: document.getElementById('student-batch').value
             };
+            
+            // Check for duplicate regNum
+            const allUsers = UsersDB.getUsers();
+            const existingUser = allUsers.find(u => u.regNum === details.regNum && u.email !== state.currentUser.email);
+            if (existingUser) {
+                addNotification(`Registration number ${details.regNum} is already registered to another user.`, "error");
+                return;
+            }
             
             const result = UsersDB.updateUser(state.currentUser.email, details);
             if (result.success) {
@@ -261,14 +308,47 @@ function initNotifications() {
     }
 }
 
-// Social Login Mock
-window.socialLoginMock = function() {
-    addNotification("Logged in via Google Authentication.");
-    document.getElementById('login-email').value = "student@nexus.edu";
-    document.getElementById('login-password').value = "password123";
-    document.getElementById('login-role').value = "student";
+// Real Google Sign-In Handler
+window.handleGoogleResponse = function(response) {
+    // 1. Decode the JWT token to get user info
+    // The credential is a standard JWT token string format: header.payload.signature
+    const responsePayload = decodeJwtResponse(response.credential);
+
+    const email = responsePayload.email;
+    const name = responsePayload.name || email.split('@')[0];
+    
+    // Determine role based on email if it matches manager allowlist
+    const allowedManagers = [
+        'lohitha.24bcw7073@vitapstudent.ac.in',
+        'dalesh.24bcs7138@vitapstudent.ac.in',
+        'reshma.24bce8167@vitapstudent.ac.in'
+    ];
+    let role = "student";
+    if (allowedManagers.includes(email.toLowerCase())) {
+        role = "manager";
+    }
+
+    addNotification(`Google Authentication successful. Welcome, ${name}.`);
+    
+    // Auto-fill login form and trigger submit
+    document.getElementById('login-name').value = name; // Just in case they need to sign up
+    document.getElementById('login-email').value = email;
+    document.getElementById('login-password').value = "password123"; // Dummy password for social login users
+    document.getElementById('login-role').value = role;
+    
+    // Simulate clicking the login button
     document.getElementById('auth-submit-btn').click();
 };
+
+function decodeJwtResponse(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+}
 
 function initProfileDropdown() {
     const trigger = document.getElementById('profile-trigger');
@@ -627,6 +707,23 @@ function renderMyBooks() {
     });
 }
 
+window.deleteUserAction = function(email) {
+    if (state.currentUser && state.currentUser.email === email) {
+        alert("Action restricted: You cannot delete your own account.");
+        return;
+    }
+    if (confirm(`Are you sure you want to permanently delete the user account for ${email}?`)) {
+        const result = UsersDB.deleteUser(email);
+        if (result.success) {
+            addNotification(`User ${email} has been deleted successfully.`);
+            renderMembers(); // Re-render table
+            applyRolePermissions(); // Re-calculate stats
+        } else {
+            addNotification(`Failed to delete user: ${result.message}`, "error");
+        }
+    }
+};
+
 // Render All Members Table (Manager)
 function renderMembers() {
     const tbody = document.getElementById('members-tbody');
@@ -663,6 +760,7 @@ function renderMembers() {
             <td><span class="status-badge ${badgeClass}">Active</span></td>
             <td>
                 <button class="btn-icon" title="View History" onclick="alert('Viewing history for ${displayName}')"><i class='bx bx-history'></i></button>
+                <button class="btn-icon text-red" title="Delete User" onclick="deleteUserAction('${user.email}')"><i class='bx bx-trash'></i></button>
             </td>
         `;
         tbody.appendChild(tr);
