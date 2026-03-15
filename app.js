@@ -94,7 +94,7 @@ const UsersDB = {
                 return { success: false, message: 'Unauthorized. This email is not approved for Library Manager access.' };
             }
             if (password !== 'password123') {
-                return { success: false, message: 'Incorrect password. Manager password is always password123.' };
+                return { success: false, message: 'Incorrect password.' };
             }
 
             const users = this.getUsers();
@@ -1020,6 +1020,11 @@ function renderMyBooks() {
 window.deleteUserAction = function(email) {
     if (state.currentUser && state.currentUser.email === email) {
         alert("Action restricted: You cannot delete your own account.");
+        return;
+    }
+    const targetUser = UsersDB.getUsers().find(u => u.email === email);
+    if (targetUser && targetUser.role === 'manager') {
+        alert("Action restricted: You cannot delete other managers.");
         return;
     }
     if (confirm(`Are you sure you want to permanently delete the user account for ${email}?`)) {
