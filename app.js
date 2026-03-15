@@ -1041,10 +1041,12 @@ window.deleteUserAction = function(email) {
 
 // Render All Members Table (Manager)
 function renderMembers() {
-    const tbody = document.getElementById('members-tbody');
-    if(!tbody) return;
+    const managersTbody = document.getElementById('managers-tbody');
+    const membersTbody = document.getElementById('members-tbody');
+    if(!membersTbody || !managersTbody) return;
     
-    tbody.innerHTML = '';
+    managersTbody.innerHTML = '';
+    membersTbody.innerHTML = '';
     const allUsers = UsersDB.getUsers();
     
     allUsers.forEach(user => {
@@ -1077,7 +1079,11 @@ function renderMembers() {
                 <button class="btn-icon text-red" title="Delete User" onclick="deleteUserAction('${user.email}')"><i class='bx bx-trash'></i></button>
             </td>
         `;
-        tbody.appendChild(tr);
+        if (user.role === 'manager') {
+            managersTbody.appendChild(tr);
+        } else {
+            membersTbody.appendChild(tr);
+        }
     });
 }
 

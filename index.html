@@ -403,7 +403,7 @@
 
                 <!-- Members Section (Manager Only) -->
                 <section id="members" class="page-section fade-in">
-                    <div class="section-header flex-between">
+                    <div class="section-header flex-between mb-2">
                         <div>
                             <h2>Member Directory</h2>
                             <p>Manage library users and monitor borrowing privileges.</p>
@@ -411,6 +411,28 @@
                         <button class="btn btn-primary shadow-glow"><i class='bx bx-user-plus'></i> New Member</button>
                     </div>
 
+                    <h3 class="mt-2 mb-1 text-muted">Library Managers</h3>
+                    <div class="glass-panel p-0 mb-2">
+                        <div class="table-responsive">
+                            <table class="data-table" id="managers-table">
+                                <thead>
+                                    <tr>
+                                        <th>Manager ID</th>
+                                        <th>Profile</th>
+                                        <th>Role</th>
+                                        <th>Active Loans</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="managers-tbody">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h3 class="mt-2 mb-1 text-muted">Students &amp; Faculty</h3>
                     <div class="glass-panel p-0">
                         <div class="table-responsive">
                             <table class="data-table" id="members-table">
